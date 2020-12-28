@@ -1,0 +1,22 @@
+logging:
+  level:
+    org.springframework.security: DEBUG
+management:
+  endpoint:
+    health:
+      show-details: always
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+    jmx:
+      exposure:
+        include: '*'
+spring:
+  application:
+    name: uaa
+  security:
+    user:
+      name: user
+      password: 12345678
+      roles: USER,ADMIN
