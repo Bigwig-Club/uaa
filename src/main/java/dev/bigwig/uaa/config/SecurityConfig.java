@@ -3,16 +3,15 @@ package dev.bigwig.uaa.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.bigwig.uaa.filter.RestAuthenticationFilter;
 import java.io.IOException;
-import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import lombok.val;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -20,9 +19,9 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.userdetails.UserDetailsPasswordService;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.DelegatingPasswordEncoder;
-import org.springframework.security.crypto.password.MessageDigestPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.zalando.problem.spring.web.advice.security.SecurityProblemSupport;
@@ -33,8 +32,9 @@ import org.zalando.problem.spring.web.advice.security.SecurityProblemSupport;
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
   private final ObjectMapper objectMapper;
-
   private final SecurityProblemSupport securityProblemSupport;
+  private final UserDetailsService userDetailsService;
+  private final UserDetailsPasswordService userDetailsPasswordService;
 
   private static void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
     Authentication authentication) throws IOException {
@@ -61,12 +61,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
   @Bean
   public PasswordEncoder passwordEncoder() {
-    val idForDefault = "bcrypt";
-    val encoders = Map.of(
-      idForDefault, new BCryptPasswordEncoder(),
-      "SHA-1", new MessageDigestPasswordEncoder("SHA-1")
-    );
-    return new DelegatingPasswordEncoder(idForDefault, encoders);
+    return new BCryptPasswordEncoder();
   }
 
   @Override
@@ -90,7 +85,15 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
   @Override
   public void configure(WebSecurity web) {
-    web.ignoring().mvcMatchers("/public/**")
+    web.ignoring().mvcMatchers("/public/**", "/h2-console/**")
       .requestMatchers(PathRequest.toStaticResources().atCommonLocations());
+  }
+
+  @Override
+  protected void configure(
+    AuthenticationManagerBuilder auth) throws Exception {
+    auth.userDetailsService(userDetailsService)
+      .userDetailsPasswordManager(userDetailsPasswordService)
+      .passwordEncoder(passwordEncoder());
   }
 }

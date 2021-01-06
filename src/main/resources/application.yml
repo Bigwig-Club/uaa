@@ -1,6 +1,7 @@
 logging:
   level:
     org.springframework.security: DEBUG
+    org.springframework.jdbc.core: TRACE
 management:
   endpoint:
     health:
@@ -20,3 +21,16 @@ spring:
       name: user
       password: 12345678
       roles: USER,ADMIN
+  datasource:
+    driver-class-name: org.h2.Driver
+    url: jdbc:h2:mem:test;MODE=MySQL;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE;DB_CLOSE_DELAY=-1
+    username: sa
+    initialization-mode: embedded
+  h2:
+    console:
+      enabled: true
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    database: h2
+    database-platform: org.hibernate.dialect.H2Dialect
